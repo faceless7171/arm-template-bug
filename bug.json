@@ -13,15 +13,38 @@
   "variables": {},
   "resources": [
     {
-      "name": "test-bug-storage",
-      "type": "Microsoft.Storage/storageAccounts",
-      "apiVersion": "2018-07-01",
-      "location": "[parameters('location')]",
-      "kind": "Storage",
-      "sku": {
-        "name": "Standard_RAGRS"
-      },
+      "name": "nesteddeploymentstorage",
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2018-05-01",
       "properties": {
+        "mode": "Incremental",
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "parameters": {
+            "location": {
+              "type": "string",
+              "defaultValue": "[resourceGroup().location]",
+              "metadata": {
+                "description": "Location for all resources."
+              }
+            }
+          },
+          "variables": {},
+          "resources": [
+            {
+              "name": "testbugstorage",
+              "type": "Microsoft.Storage/storageAccounts",
+              "apiVersion": "2018-07-01",
+              "location": "[parameters('location')]",
+              "kind": "Storage",
+              "sku": {
+                "name": "Standard_RAGRS"
+              },
+              "properties": {}
+            }
+          ]
+        }
       }
     },
     {
@@ -60,7 +83,7 @@
           "appSettings": [
             {
               "name": "TestKey",
-              "value": "[listKeys(resourceId('Microsoft.Storage/storageAccounts', 'test-bug-storage'),  providers('Microsoft.Storage', 'storageAccounts').apiVersions[0]).keys[0].value]"
+              "value": "[listKeys(resourceId('Microsoft.Storage/storageAccounts', 'testbugstorage'),  providers('Microsoft.Storage', 'storageAccounts').apiVersions[0]).keys[0].value]"
             }
           ]
         },
@@ -71,14 +94,12 @@
         "dailyMemoryTimeQuota": 0,
         "httpsOnly": false
       },
-      "resources": [
-      ],
+      "resources": [],
       "dependsOn": [
         "[resourceId('Microsoft.Web/serverfarms', 'test-bug-service-plan')]",
-        "[resourceId('Microsoft.Storage/storageAccounts', 'test-bug-storage')]"
+        "nesteddeploymentstorage"
       ]
     }
   ],
-  "outputs": {
-  }
+  "outputs": {}
 }
